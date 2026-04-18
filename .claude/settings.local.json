@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xcodegen generate:*)",
+      "Bash(xcodebuild -project NewDocGenieAI.xcodeproj -scheme NewDocGenieAI -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build)",
+      "Bash(xcodebuild -project NewDocGenieAI.xcodeproj -scheme NewDocGenieAI -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build)",
+      "Bash(xcrun simctl:*)",
+      "Bash(xcodebuild -project /Users/rohitdhawan/Documents/learn/NewDocGenieAI/NewDocGenieAI.xcodeproj -scheme NewDocGenieAI -destination 'id=D02D2054-FAA7-4ABE-8EEF-AF28CB2FB9D8' build)",
+      "Bash(open -a Simulator)",
+      "Bash(git init:*)",
+      "Bash(ruby --version)",
+      "Bash(ruby add_files_to_pbxproj.rb)",
+      "Bash(xcodebuild -project /Users/rohitdhawan/Documents/learn/NewDocGenieAI/NewDocGenieAI.xcodeproj -scheme NewDocGenieAI -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build)",
+      "Bash(xcodebuild -project /Users/rohitdhawan/Documents/learn/NewDocGenieAI/NewDocGenieAI.xcodeproj -scheme NewDocGenieAI -destination 'platform=iOS Simulator,name=iPhone 17 Pro' -derivedDataPath /tmp/NewDocGenieAI_build build)",
+      "Bash(osascript:*)",
+      "Bash(python3 -c \"import pbxproj; print\\(''''pbxproj available''''\\)\")",
+      "Bash(pip3 install:*)",
+      "Bash(python3:*)",
+      "Bash(xcodebuild -project NewDocGenieAI.xcodeproj -scheme NewDocGenieAI -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build)",
+      "Bash(xcodebuild -project NewDocGenieAI.xcodeproj -scheme NewDocGenieAI -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build)",
+      "Bash(xcodebuild -project /Users/rohitdhawan/Documents/learn/NewDocGenieAI/NewDocGenieAI.xcodeproj -showBuildSettings)",
+      "Bash(xcodebuild -project /Users/rohitdhawan/Documents/learn/NewDocGenieAI/NewDocGenieAI.xcodeproj -scheme NewDocGenieAI -showBuildSettings)",
+      "Bash(find /Users/rohitdhawan/Documents/learn/NewDocGenieAI -maxdepth 2 -name Makefile -o -name *.sh -o -name build.yml)",
+      "Bash(xcodebuild -project /Users/rohitdhawan/Documents/learn/NewDocGenieAI/NewDocGenieAI.xcodeproj -scheme NewDocGenieAI -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16e' build)",
+      "Bash(xcodebuild test:*)",
+      "Bash(xcodebuild -project NewDocGenieAI.xcodeproj -list)",
+      "Bash(xcodebuild -showsdks)",
+      "Bash(xcode-select -p)",
+      "Bash(xcodebuild -version)",
+      "Bash(xcodebuild -project NewDocGenieAI.xcodeproj -scheme NewDocGenieAI -sdk iphonesimulator -destination 'platform=iOS Simulator,OS=26.2,name=iPhone 17 Pro' build)",
+      "Bash(xcodebuild -project NewDocGenieAI.xcodeproj -scheme NewDocGenieAI -showdestinations)",
+      "Bash(xcodebuild -project NewDocGenieAI.xcodeproj -target NewDocGenieAI -sdk iphonesimulator26.4 -destination 'id=D02D2054-FAA7-4ABE-8EEF-AF28CB2FB9D8' build)",
+      "Bash(xcrun -sdk iphonesimulator swift /tmp/generate_icon.swift)",
+      "Bash(swift /tmp/generate_icon.swift)"
+    ]
+  }
+}
