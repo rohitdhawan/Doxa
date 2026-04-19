@@ -1,13 +1,18 @@
 import SwiftUI
 import StoreKit
-import TipKit
+import MessageUI
 
 struct SettingsTabView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = true
     @AppStorage("themeMode") private var themeMode: ThemeMode = .system
     @State private var showOnboardingReset = false
-    @State private var showTipsReset = false
+    @State private var showMailComposer = false
+    @State private var showMailFallbackAlert = false
+    @State private var supportMailSubject = ""
+    @State private var supportMailBody = ""
+    @Environment(\.openURL) private var openURL
     private var tipJar = TipJarService.shared
+    private let supportEmail = "rohit.dhawan02@gmail.com"
 
     private var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -64,6 +69,24 @@ struct SettingsTabView: View {
                                 }
                             }
                             .pickerStyle(.segmented)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(AppSpacing.md)
+                    }
+                    .padding(.horizontal, AppSpacing.md)
+
+                    // Support the Developer
+                    AppCard(style: .glass) {
+                        VStack(alignment: .leading, spacing: AppSpacing.md) {
+                            Label("Support Doxa", systemImage: "heart.fill")
+                                .font(.appH3)
+                                .foregroundStyle(Color.appDanger)
+
+                            Text("Need your help to continue this application. A small tip keeps development going!")
+                                .font(.appCaption)
+                                .foregroundStyle(Color.appTextMuted)
+
+                            supportButton
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(AppSpacing.md)
@@ -146,24 +169,6 @@ struct SettingsTabView: View {
                     }
                     .padding(.horizontal, AppSpacing.md)
 
-                    // Support the Developer
-                    AppCard(style: .glass) {
-                        VStack(alignment: .leading, spacing: AppSpacing.md) {
-                            Label("Support Doxa", systemImage: "heart.fill")
-                                .font(.appH3)
-                                .foregroundStyle(Color.appDanger)
-
-                            Text("Need your help to continue this application. A small tip keeps development going!")
-                                .font(.appCaption)
-                                .foregroundStyle(Color.appTextMuted)
-
-                            supportButton
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(AppSpacing.md)
-                    }
-                    .padding(.horizontal, AppSpacing.md)
-
                     // Storage
                     AppCard(style: .glass) {
                         VStack(alignment: .leading, spacing: AppSpacing.sm) {
@@ -205,58 +210,6 @@ struct SettingsTabView: View {
                     }
                     .padding(.horizontal, AppSpacing.md)
 
-                    // Actions
-                    AppCard(style: .glass) {
-                        VStack(alignment: .leading, spacing: AppSpacing.sm) {
-                            Label("Actions", systemImage: "arrow.clockwise")
-                                .font(.appH3)
-                                .foregroundStyle(Color.appText)
-
-                            Button {
-                                HapticManager.light()
-                                showOnboardingReset = true
-                            } label: {
-                                HStack(spacing: AppSpacing.sm) {
-                                    Image(systemName: "arrow.counterclockwise")
-                                        .font(.appCaption)
-                                        .foregroundStyle(Color.appAccent)
-                                        .frame(width: 20)
-                                    Text("Replay Onboarding")
-                                        .font(.appBody)
-                                        .foregroundStyle(Color.appTextMuted)
-                                    Spacer()
-                                    Image(systemName: "chevron.right")
-                                        .font(.appCaption)
-                                        .foregroundStyle(Color.appTextDim)
-                                }
-                            }
-
-                            Divider().background(Color.appBorder)
-
-                            Button {
-                                HapticManager.light()
-                                showTipsReset = true
-                            } label: {
-                                HStack(spacing: AppSpacing.sm) {
-                                    Image(systemName: "lightbulb")
-                                        .font(.appCaption)
-                                        .foregroundStyle(Color.appAccent)
-                                        .frame(width: 20)
-                                    Text("Reset Tips & Hints")
-                                        .font(.appBody)
-                                        .foregroundStyle(Color.appTextMuted)
-                                    Spacer()
-                                    Image(systemName: "chevron.right")
-                                        .font(.appCaption)
-                                        .foregroundStyle(Color.appTextDim)
-                                }
-                            }
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(AppSpacing.md)
-                    }
-                    .padding(.horizontal, AppSpacing.md)
-
                     // About
                     AppCard(style: .glass) {
                         VStack(alignment: .leading, spacing: AppSpacing.sm) {
@@ -267,6 +220,56 @@ struct SettingsTabView: View {
                             Text("Doxa is your all-in-one document management app. Scan, organize, edit, and convert documents with the power of on-device AI.")
                                 .font(.appCaption)
                                 .foregroundStyle(Color.appTextMuted)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(AppSpacing.md)
+                    }
+                    .padding(.horizontal, AppSpacing.md)
+
+                    // Support
+                    AppCard(style: .glass) {
+                        VStack(alignment: .leading, spacing: AppSpacing.md) {
+                            Label("Support", systemImage: "lifepreserver")
+                                .font(.appH3)
+                                .foregroundStyle(Color.appText)
+
+                            Text("Found a bug or want a new feature? Send feedback directly from the app.")
+                                .font(.appCaption)
+                                .foregroundStyle(Color.appTextMuted)
+
+                            Button {
+                                presentSupportMail(
+                                    subject: "Doxa Bug Report",
+                                    body: supportBody(prefix: "Describe the issue you found:")
+                                )
+                            } label: {
+                                supportActionRow(
+                                    icon: "ladybug.fill",
+                                    title: "Report an Error",
+                                    detail: "Email the issue details and what happened."
+                                )
+                            }
+                            .buttonStyle(.plain)
+
+                            Divider().background(Color.appBorder)
+
+                            Button {
+                                presentSupportMail(
+                                    subject: "Doxa Feature Request",
+                                    body: supportBody(prefix: "Describe the feature you would like to see:")
+                                )
+                            } label: {
+                                supportActionRow(
+                                    icon: "sparkles",
+                                    title: "Request a Feature",
+                                    detail: "Share ideas for improvements or new tools."
+                                )
+                            }
+                            .buttonStyle(.plain)
+
+                            Text("Support email: \(supportEmail)")
+                                .font(.appCaption)
+                                .foregroundStyle(Color.appTextDim)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(AppSpacing.md)
@@ -290,13 +293,23 @@ struct SettingsTabView: View {
             } message: {
                 Text("This will show the onboarding walkthrough again.")
             }
-            .alert("Reset Tips?", isPresented: $showTipsReset) {
-                Button("Reset", role: .destructive) {
-                    try? Tips.resetDatastore()
+            .sheet(isPresented: $showMailComposer) {
+                MailComposerView(
+                    subject: supportMailSubject,
+                    body: supportMailBody,
+                    attachmentURL: nil,
+                    onDismiss: {
+                        showMailComposer = false
+                    }
+                )
+            }
+            .alert("Mail Not Available", isPresented: $showMailFallbackAlert) {
+                Button("Open Mail App") {
+                    openMailAppFallback()
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("All feature tips and hints will appear again.")
+                Text("Set up a Mail account on this device, or open the Mail app with a prefilled support email.")
             }
         }
     }
@@ -364,22 +377,28 @@ struct SettingsTabView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, AppSpacing.sm)
 
-        case .unavailable:
-            Button {
-                HapticManager.light()
-                Task { await tipJar.loadProduct() }
-            } label: {
-                HStack(spacing: AppSpacing.sm) {
-                    Image(systemName: "heart.circle.fill")
-                        .font(.system(size: 20))
-                    Text("Donate")
-                        .font(.appBody.bold())
+        case .unavailable(let message):
+            VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                Text(message)
+                    .font(.appCaption)
+                    .foregroundStyle(Color.appTextMuted)
+
+                Button {
+                    HapticManager.light()
+                    Task { await tipJar.loadProduct() }
+                } label: {
+                    HStack(spacing: AppSpacing.sm) {
+                        Image(systemName: "arrow.clockwise.circle.fill")
+                            .font(.system(size: 20))
+                        Text("Retry Donate Setup")
+                            .font(.appBody.bold())
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, AppSpacing.sm)
+                    .background(Color.appDanger.opacity(0.15))
+                    .foregroundStyle(Color.appDanger)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, AppSpacing.sm)
-                .background(Color.appDanger.opacity(0.15))
-                .foregroundStyle(Color.appDanger)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
             }
         }
     }
@@ -416,5 +435,61 @@ struct SettingsTabView: View {
 
             Spacer()
         }
+    }
+
+    private func supportActionRow(icon: String, title: String, detail: String) -> some View {
+        HStack(alignment: .top, spacing: AppSpacing.sm) {
+            Image(systemName: icon)
+                .font(.appCaption.weight(.semibold))
+                .foregroundStyle(Color.appAccent)
+                .frame(width: 24, height: 24)
+                .background(Color.appAccent.opacity(0.12), in: RoundedRectangle(cornerRadius: AppCornerRadius.sm))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.appBody)
+                    .foregroundStyle(Color.appText)
+
+                Text(detail)
+                    .font(.appCaption)
+                    .foregroundStyle(Color.appTextMuted)
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.appCaption)
+                .foregroundStyle(Color.appTextDim)
+        }
+    }
+
+    private func presentSupportMail(subject: String, body: String) {
+        supportMailSubject = subject
+        supportMailBody = body
+
+        if MFMailComposeViewController.canSendMail() {
+            showMailComposer = true
+        } else {
+            showMailFallbackAlert = true
+        }
+    }
+
+    private func supportBody(prefix: String) -> String {
+        """
+        \(prefix)
+
+
+
+        App Version: \(appVersion) (\(buildNumber))
+        Device: \(UIDevice.current.model)
+        iOS Version: \(UIDevice.current.systemVersion)
+        """
+    }
+
+    private func openMailAppFallback() {
+        let encodedSubject = supportMailSubject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        let encodedBody = supportMailBody.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        guard let url = URL(string: "mailto:\(supportEmail)?subject=\(encodedSubject)&body=\(encodedBody)") else { return }
+        openURL(url)
     }
 }

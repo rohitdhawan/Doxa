@@ -366,24 +366,12 @@ struct ChatTabView: View {
         showVoiceError = true
         return
         #else
-        if speechService.isRecording {
-            speechService.stopRecording()
-        } else {
-            Task {
-                let authorized = await speechService.requestAuthorization()
-                if authorized {
-                    do {
-                        try speechService.startRecording()
-                    } catch {
-                        voiceErrorMessage = error.localizedDescription
-                        showVoiceError = true
-                    }
-                }
-                // Show error message if authorization failed or service reported an error
-                if let message = speechService.errorMessage {
-                    voiceErrorMessage = message
-                    showVoiceError = true
-                }
+        Task { @MainActor in
+            await speechService.toggleRecording()
+
+            if let message = speechService.errorMessage {
+                voiceErrorMessage = message
+                showVoiceError = true
             }
         }
         #endif

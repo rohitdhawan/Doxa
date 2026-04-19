@@ -14,33 +14,21 @@ final class SpeechRecognitionService {
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
     private let audioEngine = AVAudioEngine()
+    private var hasInstalledTap = false
 
     init(locale: Locale = .current) {
         speechRecognizer = SFSpeechRecognizer(locale: locale)
     }
 
     func requestAuthorization() async -> Bool {
-        let speechStatus = await withCheckedContinuation { continuation in
-            SFSpeechRecognizer.requestAuthorization { status in
-                continuation.resume(returning: status)
-            }
-        }
+        let speechStatus = await Self.requestSpeechRecognitionAuthorization()
 
         guard speechStatus == .authorized else {
             errorMessage = "Speech recognition not authorized."
             return false
         }
 
-        let micGranted: Bool
-        if #available(iOS 17.0, *) {
-            micGranted = await AVAudioApplication.requestRecordPermission()
-        } else {
-            micGranted = await withCheckedContinuation { continuation in
-                AVAudioSession.sharedInstance().requestRecordPermission { granted in
-                    continuation.resume(returning: granted)
-                }
-            }
-        }
+        let micGranted = await Self.requestMicrophoneAuthorization()
 
         guard micGranted else {
             errorMessage = "Microphone access not granted."
@@ -56,14 +44,14 @@ final class SpeechRecognitionService {
         errorMessage = "Voice input is not available in the Simulator. Please use a physical device."
         return
         #else
+        guard !isRecording else { return }
         guard let speechRecognizer, speechRecognizer.isAvailable else {
             errorMessage = "Speech recognition is not available on this device."
             return
         }
 
-        // Cancel any ongoing task
-        recognitionTask?.cancel()
-        recognitionTask = nil
+        // Reset any previous audio pipeline before starting a fresh recording session.
+        cleanupAudioEngine(resetRecordingState: false)
 
         let audioSession = AVAudioSession.sharedInstance()
         try audioSession.setCategory(.record, mode: .measurement, options: .duckOthers)
@@ -85,33 +73,25 @@ final class SpeechRecognitionService {
             return
         }
 
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { [weak self] buffer, _ in
-            self?.recognitionRequest?.append(buffer)
-
-            // Calculate audio level from buffer
-            guard let channelData = buffer.floatChannelData?[0] else { return }
-            let frames = Int(buffer.frameLength)
-            var sum: Float = 0
-            for i in 0..<frames {
-                sum += abs(channelData[i])
-            }
-            let avg = sum / Float(max(frames, 1))
-            let normalized = min(avg * 10, 1.0) // Normalize to 0-1
-
-            Task { @MainActor [weak self] in
-                self?.audioLevel = normalized
-            }
-        }
+        Self.installRecognitionTap(
+            on: inputNode,
+            recognitionRequest: recognitionRequest,
+            format: recordingFormat
+        )
+        hasInstalledTap = true
 
         recognitionTask = speechRecognizer.recognitionTask(with: recognitionRequest) { [weak self] result, error in
+            let bestText = result?.bestTranscription.formattedString
+            let shouldCleanup = error != nil || (result?.isFinal ?? false)
+
             Task { @MainActor [weak self] in
                 guard let self else { return }
 
-                if let result {
-                    self.transcribedText = result.bestTranscription.formattedString
+                if let bestText {
+                    self.transcribedText = bestText
                 }
 
-                if error != nil || (result?.isFinal ?? false) {
+                if shouldCleanup {
                     self.cleanupAudioEngine()
                 }
             }
@@ -122,6 +102,7 @@ final class SpeechRecognitionService {
         isRecording = true
         transcribedText = ""
         errorMessage = nil
+        audioLevel = 0.35
         #endif
     }
 
@@ -133,16 +114,19 @@ final class SpeechRecognitionService {
         audioLevel = 0
     }
 
-    func toggleRecording() {
+    func toggleRecording() async {
         if isRecording {
             stopRecording()
         } else {
-            Task {
-                if !isAuthorized {
-                    let authorized = await requestAuthorization()
-                    guard authorized else { return }
-                }
-                try? startRecording()
+            if !isAuthorized {
+                let authorized = await requestAuthorization()
+                guard authorized else { return }
+            }
+
+            do {
+                try startRecording()
+            } catch {
+                errorMessage = error.localizedDescription
             }
         }
     }
@@ -153,12 +137,52 @@ final class SpeechRecognitionService {
         audioLevel = 0
     }
 
-    private func cleanupAudioEngine() {
-        audioEngine.stop()
-        audioEngine.inputNode.removeTap(onBus: 0)
+    nonisolated private static func requestSpeechRecognitionAuthorization() async -> SFSpeechRecognizerAuthorizationStatus {
+        await withCheckedContinuation { continuation in
+            SFSpeechRecognizer.requestAuthorization { status in
+                continuation.resume(returning: status)
+            }
+        }
+    }
+
+    nonisolated private static func requestMicrophoneAuthorization() async -> Bool {
+        await withCheckedContinuation { continuation in
+            AVAudioSession.sharedInstance().requestRecordPermission { granted in
+                continuation.resume(returning: granted)
+            }
+        }
+    }
+
+    nonisolated private static func installRecognitionTap(
+        on inputNode: AVAudioInputNode,
+        recognitionRequest: SFSpeechAudioBufferRecognitionRequest,
+        format: AVAudioFormat
+    ) {
+        inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { buffer, _ in
+            recognitionRequest.append(buffer)
+        }
+    }
+
+    private func cleanupAudioEngine(resetRecordingState: Bool = true) {
+        if audioEngine.isRunning {
+            audioEngine.stop()
+        }
+
+        if hasInstalledTap {
+            audioEngine.inputNode.removeTap(onBus: 0)
+            hasInstalledTap = false
+        }
+
         recognitionRequest?.endAudio()
         recognitionRequest = nil
         recognitionTask?.cancel()
         recognitionTask = nil
+        audioLevel = 0
+
+        if resetRecordingState {
+            isRecording = false
+        }
+
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 }

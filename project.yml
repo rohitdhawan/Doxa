@@ -24,6 +24,8 @@ targets:
         INFOPLIST_KEY_NSDocumentsFolderUsageDescription: "Doxa needs access to your documents to import and manage files."
         INFOPLIST_KEY_NSPhotoLibraryUsageDescription: "Doxa can import images from your photo library."
         INFOPLIST_KEY_NSCameraUsageDescription: "Doxa uses the camera to scan documents."
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: "Doxa uses the microphone for voice input in chat."
+        INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: "Doxa uses speech recognition to convert your voice into text in chat."
     info:
       path: NewDocGenieAI/App/Info.plist
       properties:
@@ -34,8 +36,10 @@ targets:
           - "_docgenie-xfer._tcp"
         NSCameraUsageDescription: "Doxa uses the camera to scan documents."
         NSLocalNetworkUsageDescription: "Doxa uses your local network to find nearby devices and transfer files securely."
+        NSMicrophoneUsageDescription: "Doxa uses the microphone for voice input in chat."
         NSDocumentsFolderUsageDescription: "Doxa needs access to your documents to import and manage files."
         NSPhotoLibraryUsageDescription: "Doxa can import images from your photo library."
+        NSSpeechRecognitionUsageDescription: "Doxa uses speech recognition to convert your voice into text in chat."
         UISupportsDocumentBrowser: true
         CFBundleDocumentTypes:
           - CFBundleTypeName: "Documents"
@@ -50,3 +54,12 @@ targets:
               - "com.microsoft.powerpoint.ppt"
               - "public.plain-text"
               - "public.image"
+
+schemes:
+  NewDocGenieAI:
+    build:
+      targets:
+        NewDocGenieAI: all
+    run:
+      config: Debug
+      storeKitConfiguration: Configurations/Doxa.storekit

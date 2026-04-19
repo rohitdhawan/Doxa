@@ -45,8 +45,12 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Doxa uses the camera to scan documents.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Doxa uses the microphone for voice input in chat.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Doxa uses your local network to find nearby devices and transfer files securely.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Doxa uses speech recognition to convert your voice into text in chat.</string>
 	<key>NSDocumentsFolderUsageDescription</key>
 	<string>Doxa needs access to your documents to import and manage files.</string>
 	<key>NSBonjourServices</key>

@@ -12,7 +12,7 @@ final class TipJarService {
         case purchasing
         case success
         case failed(String)
-        case unavailable
+        case unavailable(String)
     }
 
     private(set) var purchaseState: PurchaseState = .loading
@@ -32,10 +32,10 @@ final class TipJarService {
                 tipProduct = product
                 purchaseState = .ready
             } else {
-                purchaseState = .unavailable
+                purchaseState = .unavailable("Donation product is not available yet. Check the local StoreKit configuration or App Store Connect setup for \(Self.tipProductID).")
             }
         } catch {
-            purchaseState = .unavailable
+            purchaseState = .unavailable("Unable to load donation options right now. Please try again later.")
         }
     }
 

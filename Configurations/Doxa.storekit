@@ -1,0 +1,36 @@
+{
+  "identifier" : "0D7A9F7E-72A7-4AF2-8B4F-1B0C1D0F4D11",
+  "nonRenewingSubscriptions" : [],
+  "products" : [
+    {
+      "displayPrice" : "0.99",
+      "familyShareable" : false,
+      "internalID" : "9B22C38D-6E98-43B1-B04D-3F31B155A701",
+      "localizations" : [
+        {
+          "description" : "Support Doxa development with a small one-time tip.",
+          "displayName" : "Small Tip",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.newdocgenieai.app.tip.small",
+      "referenceName" : "Small Tip",
+      "type" : "Consumable"
+    }
+  ],
+  "settings" : {
+    "_applicationInternalID" : "A3A67787-08F6-4ACB-9408-AB75B22D7A56",
+    "_developerTeamID" : "",
+    "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 766517400,
+    "_locale" : "en_US",
+    "_renewalBillingGracePeriodDuration" : 16,
+    "_storefront" : "USA",
+    "_timeRate" : 0
+  },
+  "subscriptionGroups" : [],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

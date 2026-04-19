@@ -1126,7 +1126,9 @@
 				INFOPLIST_FILE = NewDocGenieAI/App/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Doxa uses the camera to scan documents.";
 				INFOPLIST_KEY_NSDocumentsFolderUsageDescription = "Doxa needs access to your documents to import and manage files.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Doxa uses the microphone for voice input in chat.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Doxa can import images from your photo library.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Doxa uses speech recognition to convert your voice into text in chat.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1146,7 +1148,9 @@
 				INFOPLIST_FILE = NewDocGenieAI/App/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Doxa uses the camera to scan documents.";
 				INFOPLIST_KEY_NSDocumentsFolderUsageDescription = "Doxa needs access to your documents to import and manage files.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Doxa uses the microphone for voice input in chat.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Doxa can import images from your photo library.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Doxa uses speech recognition to convert your voice into text in chat.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
