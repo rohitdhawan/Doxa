@@ -33,8 +33,8 @@ struct ImageToPDFView: View {
             }
             .navigationTitle("Image to PDF")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color.appBGDark, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarBackground(Color.appBackground, for: .navigationBar)
+            .toolbarColorScheme(.light, for: .navigationBar)
             .toolbar { toolbarContent }
             .confirmationDialog("Choose Image Source", isPresented: $showSourcePicker) {
                 Button("Photo Library") { showPhotoPicker = true }
@@ -238,8 +238,8 @@ private struct ImageFilePickerSheet: View {
             }
             .navigationTitle("App Files")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color.appBGDark, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarBackground(Color.appBackground, for: .navigationBar)
+            .toolbarColorScheme(.light, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() }.disabled(selectedFiles.isEmpty) }

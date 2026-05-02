@@ -85,13 +85,18 @@ final class ConverterViewModel {
 
     func pdfToText(url: URL) {
         isProcessing = true
-        defer { isProcessing = false }
-        do {
-            extractedText = try service.pdfToText(url: url)
-            didComplete = true
-        } catch {
-            errorMessage = error.localizedDescription
-            showError = true
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            do {
+                extractedText = try await service.pdfToText(url: url)
+                didComplete = true
+                HapticManager.success()
+            } catch {
+                errorMessage = error.localizedDescription
+                showError = true
+                HapticManager.error()
+            }
+            isProcessing = false
         }
     }
 

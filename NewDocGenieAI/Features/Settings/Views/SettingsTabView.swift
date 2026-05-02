@@ -75,23 +75,25 @@ struct SettingsTabView: View {
                     }
                     .padding(.horizontal, AppSpacing.md)
 
-                    // Support the Developer
-                    AppCard(style: .glass) {
-                        VStack(alignment: .leading, spacing: AppSpacing.md) {
-                            Label("Support Doxa", systemImage: "heart.fill")
-                                .font(.appH3)
-                                .foregroundStyle(Color.appDanger)
+                    if tipJar.isDonationAvailable {
+                        // Support the Developer
+                        AppCard(style: .glass) {
+                            VStack(alignment: .leading, spacing: AppSpacing.md) {
+                                Label("Support Doxa", systemImage: "heart.fill")
+                                    .font(.appH3)
+                                    .foregroundStyle(Color.appDanger)
 
-                            Text("Need your help to continue this application. A small tip keeps development going!")
-                                .font(.appCaption)
-                                .foregroundStyle(Color.appTextMuted)
+                                Text("Need your help to continue this application. A small tip keeps development going!")
+                                    .font(.appBody)
+                                    .foregroundStyle(Color.appText)
 
-                            supportButton
+                                supportButton
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(AppSpacing.md)
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(AppSpacing.md)
+                        .padding(.horizontal, AppSpacing.md)
                     }
-                    .padding(.horizontal, AppSpacing.md)
 
                     // User Guide
                     AppCard(style: .glass) {
@@ -318,15 +320,7 @@ struct SettingsTabView: View {
     private var supportButton: some View {
         switch tipJar.purchaseState {
         case .loading:
-            HStack(spacing: AppSpacing.sm) {
-                ProgressView()
-                    .tint(Color.appTextMuted)
-                Text("Loading...")
-                    .font(.appCaption)
-                    .foregroundStyle(Color.appTextMuted)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, AppSpacing.sm)
+            EmptyView()
 
         case .ready:
             Button {
@@ -377,29 +371,8 @@ struct SettingsTabView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, AppSpacing.sm)
 
-        case .unavailable(let message):
-            VStack(alignment: .leading, spacing: AppSpacing.sm) {
-                Text(message)
-                    .font(.appCaption)
-                    .foregroundStyle(Color.appTextMuted)
-
-                Button {
-                    HapticManager.light()
-                    Task { await tipJar.loadProduct() }
-                } label: {
-                    HStack(spacing: AppSpacing.sm) {
-                        Image(systemName: "arrow.clockwise.circle.fill")
-                            .font(.system(size: 20))
-                        Text("Retry Donate Setup")
-                            .font(.appBody.bold())
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, AppSpacing.sm)
-                    .background(Color.appDanger.opacity(0.15))
-                    .foregroundStyle(Color.appDanger)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                }
-            }
+        case .unavailable:
+            EmptyView()
         }
     }
 

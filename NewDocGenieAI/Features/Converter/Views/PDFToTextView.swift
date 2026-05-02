@@ -7,6 +7,8 @@ struct PDFToTextView: View {
     @State private var viewModel = ConverterViewModel()
     @State private var selectedFiles: [DocumentFile] = []
     @State private var showPicker = false
+    @State private var showConfirmation = false
+    @State private var confirmationMessage = ""
     @State private var outputName = ""
 
     private var selectedFile: DocumentFile? { selectedFiles.first }
@@ -19,11 +21,21 @@ struct PDFToTextView: View {
                         HStack {
                             TextField("Output file name", text: $outputName)
                                 .font(.appBody).autocorrectionDisabled()
-                            Button("Save as TXT") {
+                            Button {
                                 viewModel.saveExtractedText(outputName: outputName, context: modelContext)
+                                if !viewModel.showError {
+                                    confirmationMessage = "Text saved successfully."
+                                    showConfirmation = true
+                                }
+                            } label: {
+                                Label("Save TXT", systemImage: "square.and.arrow.down")
+                                    .font(.appCaption.weight(.semibold))
+                                    .lineLimit(1)
+                                    .padding(.horizontal, AppSpacing.sm)
+                                    .padding(.vertical, AppSpacing.xs)
+                                    .background(Color.appPrimary.opacity(0.14), in: RoundedRectangle(cornerRadius: AppCornerRadius.sm))
+                                    .foregroundStyle(Color.appPrimary)
                             }
-                            .font(.appCaption)
-                            .foregroundStyle(Color.appPrimary)
                             .disabled(outputName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                         }
                         .padding(AppSpacing.md)
@@ -31,15 +43,14 @@ struct PDFToTextView: View {
 
                         Divider()
 
-                        ScrollView {
-                            Text(text)
-                                .font(.appMono)
-                                .foregroundStyle(Color.appText)
-                                .textSelection(.enabled)
-                                .padding(AppSpacing.md)
-                        }
+                        TextEditor(text: .constant(text))
+                            .font(.appMono)
+                            .foregroundColor(Color.appText)
+                            .scrollContentBackground(.hidden)
+                            .background(Color.appBackground)
+                            .padding(AppSpacing.sm)
                     }
-                    .background(Color.appBGDark)
+                    .background(Color.appBackground)
                 } else if viewModel.isProcessing {
                     VStack(spacing: AppSpacing.md) {
                         ProgressView().scaleEffect(1.5)
@@ -63,7 +74,7 @@ struct PDFToTextView: View {
                         }
 
                         Section {
-                            Text("Extracts embedded text from PDF. For scanned documents, use OCR Text instead.")
+                            Text("Extracts text from PDFs, including scanned pages when OCR is needed.")
                                 .font(.appCaption).foregroundStyle(Color.appTextMuted)
                         }
                     }
@@ -71,10 +82,15 @@ struct PDFToTextView: View {
             }
             .navigationTitle("PDF to Text")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color.appBGDark, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarBackground(Color.appBackground, for: .navigationBar)
+            .toolbarColorScheme(.light, for: .navigationBar)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Close") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") {
+                        viewModel.reset()
+                        dismiss()
+                    }
+                }
                 if viewModel.extractedText == nil && !viewModel.isProcessing {
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Extract") { extract() }
@@ -85,6 +101,8 @@ struct PDFToTextView: View {
                     ToolbarItem(placement: .confirmationAction) {
                         Button {
                             UIPasteboard.general.string = viewModel.extractedText
+                            confirmationMessage = "Text copied successfully."
+                            showConfirmation = true
                         } label: {
                             Label("Copy", systemImage: "doc.on.doc")
                         }
@@ -99,6 +117,11 @@ struct PDFToTextView: View {
             }
             .alert("Error", isPresented: $viewModel.showError) { Button("OK") {} } message: {
                 Text(viewModel.errorMessage ?? "An error occurred.")
+            }
+            .alert("Success", isPresented: $showConfirmation) {
+                Button("OK") {}
+            } message: {
+                Text(confirmationMessage)
             }
         }
     }

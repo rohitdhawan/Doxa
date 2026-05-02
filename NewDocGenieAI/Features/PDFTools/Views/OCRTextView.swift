@@ -49,23 +49,24 @@ struct OCRTextView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color.appBGDark)
                 } else {
-                    ScrollView {
-                        Text(extractedText)
-                            .font(.appMono)
-                            .foregroundStyle(Color.appText)
-                            .textSelection(.enabled)
-                            .padding(AppSpacing.md)
-                    }
-                    .background(Color.appBGDark)
+                    TextEditor(text: .constant(extractedText))
+                        .font(.appMono)
+                        .foregroundColor(Color.appText)
+                        .scrollContentBackground(.hidden)
+                        .background(Color.appBackground)
+                        .padding(AppSpacing.sm)
                 }
             }
             .navigationTitle("OCR Text")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color.appBGDark, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarBackground(Color.appBackground, for: .navigationBar)
+            .toolbarColorScheme(.light, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") { dismiss() }
+                    Button("Close") {
+                        extractedText = ""
+                        dismiss()
+                    }
                 }
                 if extractedText.isEmpty && !isProcessing {
                     ToolbarItem(placement: .confirmationAction) {
@@ -146,8 +147,8 @@ private struct OCRFilePickerSheet: View {
             }
             .navigationTitle("Select File")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color.appBGDark, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarBackground(Color.appBackground, for: .navigationBar)
+            .toolbarColorScheme(.light, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
             }

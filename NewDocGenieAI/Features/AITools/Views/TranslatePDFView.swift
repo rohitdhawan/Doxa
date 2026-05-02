@@ -19,6 +19,8 @@ struct TranslatePDFView: View {
 
     var body: some View {
         NavigationStack {
+            let aiStatus = AIService.shared.onDeviceAIStatus
+
             Group {
                 if let text = viewModel.resultText {
                     resultView(text)
@@ -54,12 +56,12 @@ struct TranslatePDFView: View {
                             .font(.appBody)
                         }
 
-                        if !AIService.shared.isOnDeviceAIAvailable {
+                        if !aiStatus.isAvailable {
                             Section {
-                                Label("Requires iOS 26+", systemImage: "exclamationmark.triangle")
+                                Label(aiStatus.title, systemImage: "exclamationmark.triangle")
                                     .foregroundStyle(Color.appWarning)
                                     .font(.appBody)
-                                Text("On-device AI is needed for translation.")
+                                Text(aiStatus.message)
                                     .font(.appCaption).foregroundStyle(Color.appTextMuted)
                             }
                         }
@@ -68,8 +70,8 @@ struct TranslatePDFView: View {
             }
             .navigationTitle("Translate PDF")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color.appBGDark, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarBackground(Color.appBackground, for: .navigationBar)
+            .toolbarColorScheme(.light, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
@@ -77,7 +79,7 @@ struct TranslatePDFView: View {
                         Button("Done") { dismiss() }
                     } else if !viewModel.isProcessing {
                         Button("Translate") { translate() }
-                            .disabled(selectedFile == nil || !AIService.shared.isOnDeviceAIAvailable)
+                            .disabled(selectedFile == nil)
                     }
                 }
             }
@@ -86,6 +88,9 @@ struct TranslatePDFView: View {
             }
             .onChange(of: selectedFiles) { _, _ in
                 if let file = selectedFile { outputName = "\(file.name) (\(targetLanguage))" }
+            }
+            .onAppear {
+                AIService.shared.refreshProviderForCurrentAvailability()
             }
             .alert("Error", isPresented: $viewModel.showError) { Button("OK") {} } message: {
                 Text(viewModel.errorMessage ?? "An error occurred.")
@@ -125,6 +130,14 @@ struct TranslatePDFView: View {
 
     private func translate() {
         guard let url = selectedFile?.fileURL else { return }
+        AIService.shared.refreshProviderForCurrentAvailability()
+        let aiStatus = AIService.shared.onDeviceAIStatus
+        guard aiStatus.isAvailable else {
+            viewModel.errorMessage = "\(aiStatus.title): \(aiStatus.message)"
+            viewModel.showError = true
+            HapticManager.error()
+            return
+        }
         viewModel.translatePDF(url: url, targetLanguage: targetLanguage)
     }
 }

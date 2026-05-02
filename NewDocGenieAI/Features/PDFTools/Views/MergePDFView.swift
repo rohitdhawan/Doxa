@@ -57,8 +57,8 @@ struct MergePDFView: View {
             }
             .navigationTitle("Merge PDF")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color.appBGDark, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarBackground(Color.appBackground, for: .navigationBar)
+            .toolbarColorScheme(.light, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }

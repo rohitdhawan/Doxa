@@ -44,7 +44,7 @@ struct ChatInputBar: View {
                     .font(.appBody)
                     .lineLimit(1...4)
                     .focused(isInputFocused)
-                    .submitLabel(.send)
+                    .submitLabel(.return)
                     .onSubmit {
                         if canSend && !isTyping {
                             onSend()

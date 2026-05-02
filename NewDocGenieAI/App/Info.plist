@@ -43,24 +43,33 @@
 	<string>1</string>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<true/>
-	<key>NSCameraUsageDescription</key>
-	<string>Doxa uses the camera to scan documents.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Doxa uses the microphone for voice input in chat.</string>
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>Doxa uses your local network to find nearby devices and transfer files securely.</string>
-	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>Doxa uses speech recognition to convert your voice into text in chat.</string>
-	<key>NSDocumentsFolderUsageDescription</key>
-	<string>Doxa needs access to your documents to import and manage files.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_docgenie-xfer._tcp</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Doxa uses the camera to scan documents.</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>Doxa needs access to your documents to import and manage files.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Doxa uses your local network to find nearby devices and transfer files securely.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Doxa uses the microphone for voice input in chat.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Doxa can import images from your photo library.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Doxa uses speech recognition to convert your voice into text in chat.</string>
+	<key>UIDeviceFamily</key>
+	<array>
+		<integer>1</integer>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+	</array>
 	<key>UISupportsDocumentBrowser</key>
 	<true/>
 </dict>

@@ -94,18 +94,33 @@ final class ConverterService {
 
     // MARK: - PDF to Text
 
-    func pdfToText(url: URL) throws -> String {
-        guard let document = PDFDocument(url: url) else { throw ConverterError.cannotOpenFile }
-
-        var text = ""
-        for i in 0..<document.pageCount {
-            guard let page = document.page(at: i), let pageText = page.string else { continue }
-            text += pageText + "\n\n"
+    nonisolated func pdfToText(url: URL) async throws -> String {
+        do {
+            return try await extractEmbeddedPDFText(url: url)
+        } catch ConverterError.noTextContent {
+            return try await OCRService.shared.extractText(from: url)
         }
+    }
 
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { throw ConverterError.noTextContent }
-        return trimmed
+    private nonisolated func extractEmbeddedPDFText(url: URL) async throws -> String {
+        try await Task.detached(priority: .userInitiated) {
+            guard let document = PDFDocument(url: url) else { throw ConverterError.cannotOpenFile }
+
+            var extractedPages: [String] = []
+            extractedPages.reserveCapacity(document.pageCount)
+
+            for i in 0..<document.pageCount {
+                try Task.checkCancellation()
+                guard let page = document.page(at: i),
+                      let pageText = page.string?.trimmingCharacters(in: .whitespacesAndNewlines),
+                      !pageText.isEmpty else { continue }
+                extractedPages.append(pageText)
+            }
+
+            let trimmed = extractedPages.joined(separator: "\n\n")
+            guard !trimmed.isEmpty else { throw ConverterError.noTextContent }
+            return trimmed
+        }.value
     }
 
     func saveTextFile(text: String, outputName: String) throws -> (url: URL, relativePath: String) {

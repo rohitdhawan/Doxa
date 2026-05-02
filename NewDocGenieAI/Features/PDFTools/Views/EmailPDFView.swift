@@ -9,10 +9,16 @@ struct EmailPDFView: View {
     @State private var emailSubject = ""
     @State private var emailBody = ""
     @State private var showMailComposer = false
+    @State private var shareItem: ShareItem?
     @State private var isGenerating = false
 
     private var selectedFile: DocumentFile? { selectedFiles.first }
     private var canSendMail: Bool { MFMailComposeViewController.canSendMail() }
+
+    private struct ShareItem: Identifiable {
+        let id = UUID()
+        let url: URL
+    }
 
     var body: some View {
         NavigationStack {
@@ -72,7 +78,7 @@ struct EmailPDFView: View {
                                 .font(.appCaption).foregroundStyle(Color.appWarning)
                             Button("Share via...") {
                                 if let url = selectedFile?.fileURL {
-                                    ShareService.shared.share(fileURL: url)
+                                    shareItem = ShareItem(url: url)
                                 }
                             }
                             .font(.appBody)
@@ -82,8 +88,8 @@ struct EmailPDFView: View {
             }
             .navigationTitle("Email PDF")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color.appBGDark, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarBackground(Color.appBackground, for: .navigationBar)
+            .toolbarColorScheme(.light, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
             }
@@ -97,6 +103,9 @@ struct EmailPDFView: View {
                     attachmentURL: selectedFile?.fileURL,
                     onDismiss: { showMailComposer = false; dismiss() }
                 )
+            }
+            .sheet(item: $shareItem) { item in
+                ActivityView(activityItems: [item.url])
             }
             .onChange(of: selectedFiles) { _, _ in
                 if let file = selectedFile {

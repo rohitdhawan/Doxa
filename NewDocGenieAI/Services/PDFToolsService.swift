@@ -263,40 +263,42 @@ final class PDFToolsService {
         try await withCheckedThrowingContinuation { continuation in
             DispatchQueue.global(qos: .userInitiated).async { [self] in
                 do {
-                    guard let doc = PDFDocument(url: url) else { throw PDFToolsError.cannotOpenPDF }
+                    guard let doc = PDFDocument(url: url),
+                          let data = doc.dataRepresentation(),
+                          let numbered = PDFDocument(data: data) else {
+                        throw PDFToolsError.cannotOpenPDF
+                    }
 
-                    let numbered = PDFDocument()
                     for i in 0..<doc.pageCount {
                         autoreleasepool {
-                            guard let page = doc.page(at: i) else { return }
+                            guard let page = numbered.page(at: i) else { return }
                             let bounds = page.bounds(for: .mediaBox)
+                            guard bounds.width > 0, bounds.height > 0 else { return }
 
-                            let renderer = UIGraphicsImageRenderer(size: bounds.size)
-                            let image = renderer.image { ctx in
-                                UIColor.white.setFill()
-                                ctx.fill(CGRect(origin: .zero, size: bounds.size))
-                                ctx.cgContext.translateBy(x: 0, y: bounds.size.height)
-                                ctx.cgContext.scaleBy(x: 1, y: -1)
-                                page.draw(with: .mediaBox, to: ctx.cgContext)
-
-                                ctx.cgContext.scaleBy(x: 1, y: -1)
-                                ctx.cgContext.translateBy(x: 0, y: -bounds.size.height)
-                                let text = "\(i + 1)" as NSString
-                                let attrs: [NSAttributedString.Key: Any] = [
-                                    .font: UIFont.systemFont(ofSize: 14, weight: .medium),
-                                    .foregroundColor: UIColor.darkGray
-                                ]
-                                let size = text.size(withAttributes: attrs)
-                                let point = CGPoint(
-                                    x: (bounds.size.width - size.width) / 2,
-                                    y: bounds.size.height - 30
-                                )
-                                text.draw(at: point, withAttributes: attrs)
-                            }
-
-                            if let newPage = PDFPage(image: image) {
-                                numbered.insert(newPage, at: numbered.pageCount)
-                            }
+                            let annotationWidth: CGFloat = min(80, bounds.width)
+                            let annotationHeight: CGFloat = 18
+                            let annotationBounds = CGRect(
+                                x: bounds.midX - annotationWidth / 2,
+                                y: bounds.minY + 16,
+                                width: annotationWidth,
+                                height: annotationHeight
+                            )
+                            let annotation = PDFAnnotation(
+                                bounds: annotationBounds,
+                                forType: .freeText,
+                                withProperties: nil
+                            )
+                            let border = PDFBorder()
+                            border.lineWidth = 0
+                            annotation.border = border
+                            annotation.color = UIColor.white.withAlphaComponent(0.85)
+                            annotation.contents = "\(i + 1)"
+                            annotation.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+                            annotation.fontColor = .black
+                            annotation.alignment = .center
+                            annotation.shouldDisplay = true
+                            annotation.shouldPrint = true
+                            page.addAnnotation(annotation)
                         }
                     }
 

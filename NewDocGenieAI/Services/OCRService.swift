@@ -6,18 +6,23 @@ import UIKit
 final class OCRService: Sendable {
     static let shared = OCRService()
 
+    private static let pdfOCRBaseScale: CGFloat = 1.5
+    private static let pdfOCRMaxDimension: CGFloat = 2400
+    private static let pdfOCRMaxPixelCount: CGFloat = 6_000_000
+
     private init() {}
 
     func extractText(from url: URL) async throws -> String {
         let fileExtension = url.pathExtension.lowercased()
 
         if fileExtension == "pdf" {
-            return try await extractTextFromPDF(url: url)
+            return try await Task.detached(priority: .userInitiated) {
+                try await self.extractTextFromPDF(url: url)
+            }.value
         } else {
-            guard let image = UIImage(contentsOfFile: url.path) else {
-                throw OCRError.cannotLoadImage
-            }
-            return try await extractTextFromImage(image)
+            return try await Task.detached(priority: .userInitiated) {
+                try await self.extractTextFromImage(url: url)
+            }.value
         }
     }
 
@@ -26,10 +31,42 @@ final class OCRService: Sendable {
             throw OCRError.cannotLoadImage
         }
 
+        return try await recognizeText { request in
+            let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+            try handler.perform([request])
+        }
+    }
+
+    private func extractTextFromImage(url: URL) async throws -> String {
+        try await recognizeText { request in
+            let handler = VNImageRequestHandler(url: url, options: [:])
+            try handler.perform([request])
+        }
+    }
+
+    private func recognizeText(_ perform: @escaping (VNRecognizeTextRequest) throws -> Void) async throws -> String {
         return try await withCheckedThrowingContinuation { continuation in
+            let lock = NSLock()
+            var didResume = false
+
+            func resumeOnce(_ result: Result<String, Error>) {
+                lock.lock()
+                defer { lock.unlock() }
+
+                guard !didResume else { return }
+                didResume = true
+
+                switch result {
+                case .success(let text):
+                    continuation.resume(returning: text)
+                case .failure(let error):
+                    continuation.resume(throwing: error)
+                }
+            }
+
             let request = VNRecognizeTextRequest { request, error in
                 if let error {
-                    continuation.resume(throwing: error)
+                    resumeOnce(.failure(error))
                     return
                 }
 
@@ -38,17 +75,16 @@ final class OCRService: Sendable {
                     .compactMap { $0.topCandidates(1).first?.string }
                     .joined(separator: "\n")
 
-                continuation.resume(returning: text)
+                resumeOnce(.success(text))
             }
 
             request.recognitionLevel = .accurate
             request.usesLanguageCorrection = true
 
-            let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
             do {
-                try handler.perform([request])
+                try perform(request)
             } catch {
-                continuation.resume(throwing: error)
+                resumeOnce(.failure(error))
             }
         }
     }
@@ -69,22 +105,7 @@ final class OCRService: Sendable {
                 continue
             }
 
-            // Fall back to OCR for scanned pages
-            let image: UIImage = autoreleasepool {
-                let bounds = page.bounds(for: .mediaBox)
-                let scale: CGFloat = 1.5
-                let size = CGSize(width: bounds.width * scale, height: bounds.height * scale)
-
-                let renderer = UIGraphicsImageRenderer(size: size)
-                return renderer.image { ctx in
-                    UIColor.white.setFill()
-                    ctx.fill(CGRect(origin: .zero, size: size))
-                    ctx.cgContext.scaleBy(x: scale, y: scale)
-                    ctx.cgContext.translateBy(x: 0, y: bounds.height)
-                    ctx.cgContext.scaleBy(x: 1, y: -1)
-                    page.draw(with: .mediaBox, to: ctx.cgContext)
-                }
-            }
+            guard let image = renderPageForOCR(page) else { continue }
 
             let pageText = try await extractTextFromImage(image)
             if !pageText.isEmpty {
@@ -97,6 +118,36 @@ final class OCRService: Sendable {
         }
 
         return allText.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func renderPageForOCR(_ page: PDFPage) -> UIImage? {
+        autoreleasepool {
+            let bounds = page.bounds(for: .mediaBox)
+            guard bounds.width > 0, bounds.height > 0 else { return nil }
+
+            let dimensionScale = min(
+                Self.pdfOCRMaxDimension / bounds.width,
+                Self.pdfOCRMaxDimension / bounds.height,
+                Self.pdfOCRBaseScale
+            )
+            let pixelScale = sqrt(Self.pdfOCRMaxPixelCount / (bounds.width * bounds.height))
+            let scale = max(0.1, min(dimensionScale, pixelScale))
+            let size = CGSize(width: bounds.width * scale, height: bounds.height * scale)
+
+            let format = UIGraphicsImageRendererFormat()
+            format.scale = 1
+            format.opaque = true
+
+            let renderer = UIGraphicsImageRenderer(size: size, format: format)
+            return renderer.image { ctx in
+                UIColor.white.setFill()
+                ctx.fill(CGRect(origin: .zero, size: size))
+                ctx.cgContext.scaleBy(x: scale, y: scale)
+                ctx.cgContext.translateBy(x: -bounds.minX, y: bounds.maxY)
+                ctx.cgContext.scaleBy(x: 1, y: -1)
+                page.draw(with: .mediaBox, to: ctx.cgContext)
+            }
+        }
     }
 }
 

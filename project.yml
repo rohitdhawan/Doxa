@@ -21,6 +21,13 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.newdocgenieai.app
+        TARGETED_DEVICE_FAMILY: "1"
+        SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
+        SUPPORTS_MACCATALYST: "NO"
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: "NO"
+        SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: "NO"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: 36Y264X46K
         INFOPLIST_KEY_NSDocumentsFolderUsageDescription: "Doxa needs access to your documents to import and manage files."
         INFOPLIST_KEY_NSPhotoLibraryUsageDescription: "Doxa can import images from your photo library."
         INFOPLIST_KEY_NSCameraUsageDescription: "Doxa uses the camera to scan documents."
@@ -31,6 +38,11 @@ targets:
       properties:
         UILaunchStoryboardName: LaunchScreen
         CFBundleDisplayName: "Doxa"
+        UIDeviceFamily:
+          - 1
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
         LSSupportsOpeningDocumentsInPlace: true
         NSBonjourServices:
           - "_docgenie-xfer._tcp"

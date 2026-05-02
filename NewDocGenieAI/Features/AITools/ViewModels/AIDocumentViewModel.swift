@@ -98,8 +98,9 @@ final class AIDocumentViewModel {
             do {
                 let text = try await ocrService.extractText(from: url)
 
-                guard AIService.shared.isOnDeviceAIAvailable else {
-                    errorMessage = "Translation requires on-device AI (iOS 26+)."
+                let aiStatus = AIService.shared.onDeviceAIStatus
+                guard aiStatus.isAvailable else {
+                    errorMessage = "\(aiStatus.title): \(aiStatus.message)"
                     showError = true
                     return
                 }

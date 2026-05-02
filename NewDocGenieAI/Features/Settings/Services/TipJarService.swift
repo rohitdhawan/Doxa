@@ -18,6 +18,10 @@ final class TipJarService {
     private(set) var purchaseState: PurchaseState = .loading
     private(set) var tipProduct: Product?
 
+    var isDonationAvailable: Bool {
+        tipProduct != nil
+    }
+
     private static let tipProductID = "com.newdocgenieai.app.tip.small"
 
     private init() {
@@ -26,15 +30,18 @@ final class TipJarService {
 
     func loadProduct() async {
         purchaseState = .loading
+        tipProduct = nil
         do {
             let products = try await Product.products(for: [Self.tipProductID])
             if let product = products.first {
                 tipProduct = product
                 purchaseState = .ready
             } else {
-                purchaseState = .unavailable("Donation product is not available yet. Check the local StoreKit configuration or App Store Connect setup for \(Self.tipProductID).")
+                tipProduct = nil
+                purchaseState = .unavailable("Support option is unavailable.")
             }
         } catch {
+            tipProduct = nil
             purchaseState = .unavailable("Unable to load donation options right now. Please try again later.")
         }
     }
